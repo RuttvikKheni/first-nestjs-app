@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -11,43 +12,47 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-tasks.dto';
-import { GetTasksFilterDto } from './dto/get-task-filter-dto';
 import { TaskStatusVelidatorPipe } from './pipes/task-status-validator.pipe';
-import { status, Task } from './tasks.model';
+import { TaskStatus } from './tasks.types';
 import { TasksService } from './tasks.service';
+import { Task } from './task.entity';
+import { DeleteResult } from 'typeorm';
+import { GetTasksFilterDto } from './dto/get-task-filter-dto';
 
 @Controller('tasks')
 export class TasksController {
   constructor(private taskService: TasksService) {}
 
   @Get()
-  getAllTasks(@Query(ValidationPipe) filterDto: GetTasksFilterDto): Task[] {
-    if (Object.keys(filterDto).length)
-      return this.taskService.getTasksFilterDto(filterDto);
-    else return this.taskService.getAllTasks();
+  getAllTasks(
+    @Query(ValidationPipe) filterDto: GetTasksFilterDto,
+  ): Promise<Task[]> {
+    return this.taskService.getTasks(filterDto);
   }
 
   @Get('/:id')
-  getTasksByID(@Param('id') id: string): Task {
+  getTasksByID(@Param('id', ParseIntPipe) id: number): Promise<Task> {
     return this.taskService.getTasksByID(id);
   }
 
   @Post()
   @UsePipes(ValidationPipe)
-  createNewTask(@Body() createTaskDto: CreateTaskDto): Task {
+  createNewTask(@Body() createTaskDto: CreateTaskDto): Promise<Task> {
     return this.taskService.createNewTask(createTaskDto);
   }
 
   @Delete('/:id')
-  deleteTask(@Param('id') id: string): Task[] {
-    return this.taskService.deleteTask(id);
+  async deleteTask(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<DeleteResult> {
+    return await this.taskService.deleteTask(id);
   }
 
   @Patch('/:id/:status')
   updateTaskStatus(
-    @Param('id') id: string,
-    @Param('status', TaskStatusVelidatorPipe) Status: status,
-  ): Task {
+    @Param('id', ParseIntPipe) id: number,
+    @Param('status', TaskStatusVelidatorPipe) Status: TaskStatus,
+  ): Promise<Task> {
     return this.taskService.updateTaskStatus(id, Status);
   }
 }
