@@ -5,9 +5,10 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
+import * as bcyrpt from 'bcrypt';
 
 @Entity()
-@Unique(['username', 'salt'])
+@Unique(['username'])
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -18,6 +19,11 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
-  @Column()
+  @Column({ unique: true })
   salt: string;
+
+  async validatePasswor(password: string): Promise<boolean> {
+    const hash = await bcyrpt.hash(password, this.salt);
+    return hash === this.password;
+  }
 }

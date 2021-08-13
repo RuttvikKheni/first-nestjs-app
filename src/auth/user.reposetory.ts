@@ -11,12 +11,10 @@ import { AuthCredentials } from './dto/auth-credentials';
 export class UserReposetory extends Repository<User> {
   async signUp(authCredentials: AuthCredentials): Promise<void> {
     const { username, password } = authCredentials;
-    const salt = await bctypt.genSalt();
-    console.log(salt);
     const user = new User();
     user.username = username;
-    user.salt = salt;
-    user.password = await this.hasPasswordGen(password, salt);
+    user.salt = await bctypt.genSalt();
+    user.password = await this.hasPasswordGen(password, user.salt);
     try {
       await user.save();
     } catch ({ code }) {
@@ -32,5 +30,16 @@ export class UserReposetory extends Repository<User> {
     salt: string,
   ): Promise<string> {
     return bctypt.hash(password, salt);
+  }
+
+  async validateUserPassword(
+    authCredentials: AuthCredentials,
+  ): Promise<string> {
+    const { username, password } = authCredentials;
+    const user = await this.findOne({ username });
+    if (user && (await user.validatePasswor(password))) {
+      return user.username;
+    }
+    return null;
   }
 }
