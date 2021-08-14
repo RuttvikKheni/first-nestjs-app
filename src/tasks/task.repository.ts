@@ -21,7 +21,7 @@ export class TaskRepository extends Repository<Task> {
     return await query.getMany();
   }
 
-  deleteTask(id: number) {
-    return this.delete(id);
+  deleteTask(id: number, user: User) {
+    return this.delete({ id, userId: user.id });
   }
 }

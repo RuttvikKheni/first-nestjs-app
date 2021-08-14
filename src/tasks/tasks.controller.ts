@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   ParseIntPipe,
   Patch,
@@ -26,8 +27,8 @@ import { User } from 'src/auth/user.entity';
 @Controller('tasks')
 @UseGuards(AuthGuard())
 export class TasksController {
+  // private logger = new Logger('TasksModule');
   constructor(private taskService: TasksService) {}
-
   @Get()
   getAllTasks(
     @Query(ValidationPipe) filterDto: GetTasksFilterDto,
@@ -55,9 +56,10 @@ export class TasksController {
 
   @Delete('/:id')
   async deleteTask(
+    @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ): Promise<DeleteResult> {
-    return await this.taskService.deleteTask(id);
+    return await this.taskService.deleteTask(id, user);
   }
 
   @Patch('/:id/:status')
